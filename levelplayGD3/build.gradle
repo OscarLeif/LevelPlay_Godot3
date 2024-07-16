@@ -7,9 +7,9 @@ android {
     compileSdk 34
 
     defaultConfig {
-        minSdk 19
+        minSdk 21
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        //testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
 
@@ -30,6 +30,23 @@ dependencies {
     //aar
     implementation(name: "godot-lib.3.6.rc1.mono.release",ext : 'aar')
     implementation 'androidx.annotation:annotation:1.8.0'
+
+
+    implementation("com.ironsource.sdk:mediationsdk:8.1.0")
+    implementation("com.ironsource:adqualitysdk:7.20.2")
+    implementation("com.google.android.gms:play-services-appset:16.1.0")
+    implementation("com.google.android.gms:play-services-ads-identifier:18.1.0")
+    implementation("com.google.android.gms:play-services-basement:18.4.0")
+    //implementation("com.android.support:appcompat-v7:28.0.0")
+    //implementation("com.android.support:support-v4:28.0.0")
+    // Add Facebook Network
+    implementation ("com.ironsource.adapters:facebookadapter:4.3.46")
+    implementation ("com.facebook.android:audience-network-sdk:6.17.0")
+    // Add AdMob and Ad Manager Network
+    implementation ("com.google.android.gms:play-services-ads:23.1.0")
+    implementation ("com.ironsource.adapters:admobadapter:4.3.43")
+
+
     //implementation libs.androidx.appcompat
     //implementation libs.material
     //testImplementation libs.junit
