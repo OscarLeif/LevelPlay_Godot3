@@ -1,4 +1,4 @@
-package com.example.levelplaygd3;
+package com.atagames.levelplaygd3;
 
 import android.util.Log;
 import android.widget.Toast;
@@ -17,66 +17,109 @@ import org.godotengine.godot.plugin.GodotPlugin;
 import org.godotengine.godot.plugin.SignalInfo;
 import org.godotengine.godot.plugin.UsedByGodot;
 
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-public class HelloWorld extends GodotPlugin {
-
+public class Levelplay extends GodotPlugin {
     private int instance_id = -1;
     private String godotMethodName = "";
+
     public boolean Initialize = false;
+    private String userCountry;
+    //If user is in Europe SetTrue
+    private boolean IsGDPRuser;
+    //If user is in USA SetTrue
+    private boolean IsCOPPAUser;
     public static String Signal_SetInterstitialAvailable = "SetInterstitialAvailable";
     public static String Signal_Interstitial_onAdClosed = "Interstitial_onAdClosed";
     public static String Signal_GetConsentSettings = "GetConsentSettings";
 
-    public HelloWorld(Godot godot) {
+    public Levelplay(Godot godot) {
         super(godot);
+        Log.d("Levelplay", "Plugin level play constructor");
+        GatherConsentSettings();
+    }
+
+    @UsedByGodot
+    public void SetupLevelplay(boolean debugMode) {
+        if (debugMode)
+            IronSource.setMetaData("is_test_suite", "enable");
     }
 
     @NonNull
     @Override
     public String getPluginName() {
-        return "HelloWorld";
+        return "Levelplay";
     }//Oh the name is setup here
 
-    public String hello()
-    {
-        return "Hello World. Godot call to Android";
-    }
-
     @UsedByGodot
-    public void sendSignal()
-    {
+    public void sendSignal() {
         emitSignal("hello", "hello this worked");
     }
 
     @NonNull
     @Override
-    public Set<SignalInfo> getPluginSignals()
-    {
+    public Set<SignalInfo> getPluginSignals() {
         Set<SignalInfo> signals = new HashSet<>();
         signals.add(new SignalInfo("hello", String.class));
         return signals;
     }
 
     @UsedByGodot
-    public void TestToast()
-    {
-        ShowToastMessage("Non Parameters");
+    private void GatherConsentSettings() {
+        String deviceCountry = CountryUtils.getDeviceCountryOrigin();
+        CountryUtils.getUserCountry(getActivity(), new CountryUtils.CountryCallback() {
+            @Override
+            public void onCountryResult(String countryResult) {
+                if (countryResult != null) {
+                    Log.d("Country", "User countryResult is: " + countryResult);
+                    userCountry = countryResult;
+                    // Use the countryResult value here
+                } else {
+                    Log.d("Country", "Could not determine user countryResult");
+                    if (CountryUtils.getSimCountryIso(getActivity()) != null) {
+                        Log.v("Country", "Using SIM country info");
+                        userCountry = CountryUtils.getSimCountryIso(getActivity());
+                    } else {
+                        Log.v("Country", "Using device Origin Country");
+                        userCountry = deviceCountry;
+                    }
+                    Log.v("LevelPlay", "Country " + userCountry);
+                    IsGDPRuser = CountryUtils.isEuropeanCountry(userCountry);
+                    IsCOPPAUser = CountryUtils.isCoppaCountry(userCountry);
+                }
+            }
+        });
+        //emitSignal(Signal_GetConsentSettings, isGDPR, isCOPPA);
     }
 
     @UsedByGodot
-    public void ShowToastMessage(String message)
-    {
-        //How can I get this?
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
-            }
-        });
+    public boolean IsGDPRUser() {
+        return IsGDPRuser;
+    }
+
+    @UsedByGodot
+    public boolean IsCOPPAUser() {
+        return IsCOPPAUser;
+    }
+
+    public void SubmitConsent(int userAge) {
+        //COPPA
+        if (CountryUtils.isCoppaCountry(this.userCountry) && userAge < 13) {
+            IronSource.setMetaData("is_child_directed", "true");
+        } else {
+            IronSource.setMetaData("is_child_directed", "false");
+        }
+        //GDPR
+        if (CountryUtils.isEuropeanCountry(userCountry)) {
+            //SetConsentGDPR(age >= 16);
+            IronSource.setConsent(userAge >= 16);
+        }
+    }
+
+    @UsedByGodot
+    public void LaunchTestSuite() {
+        IronSource.launchTestSuite(getActivity());
     }
 
     @Override
@@ -112,8 +155,7 @@ public class HelloWorld extends GodotPlugin {
     private void InitializeRewardVideoListener() {
         IronSource.setLevelPlayRewardedVideoListener(new LevelPlayRewardedVideoListener() {
             @Override
-            public void onAdAvailable(AdInfo adInfo)
-            {
+            public void onAdAvailable(AdInfo adInfo) {
                 ShowToastDebug("Reward video ready");
             }
 
@@ -184,27 +226,24 @@ public class HelloWorld extends GodotPlugin {
         });
     }
 
-    public boolean IsInitialize()
-    {
-        if(Initialize)return true;
+    public boolean IsInitialize() {
+        if (Initialize) return true;
         Log.d("GodotIronSource", "The Plugin is not Initialized");
         return false;
     }
 
     @UsedByGodot
-    private boolean IsInterstitialReady()
-    {
+    private boolean IsInterstitialReady() {
         return IsInitialize() && IronSource.isInterstitialReady();
     }
 
     @UsedByGodot
-    private boolean IsRewardVideoAvailable()
-    {
+    private boolean IsRewardVideoReady() {
         return IsInitialize() && IronSource.isRewardedVideoAvailable();
     }
 
     private void LoadRewardVideo() {
-        if (!IsRewardVideoAvailable())
+        if (!IsRewardVideoReady())
             IronSource.loadRewardedVideo();
     }
 
@@ -222,7 +261,7 @@ public class HelloWorld extends GodotPlugin {
 
     @UsedByGodot
     private void ShowInterstitial() {
-        if (IsInitialize()&& IsInterstitialReady()) {
+        if (IsInitialize() && IsInterstitialReady()) {
             ShowToastDebug("Show Interstitial here");
             IronSource.showInterstitial();
         } else {
@@ -232,18 +271,19 @@ public class HelloWorld extends GodotPlugin {
     }
 
     @UsedByGodot
-    private void ShowToast(String message)
-    {
+    private void ShowRewardVideAd() {
+
+    }
+
+    @UsedByGodot
+    private void ShowToast(String message) {
         ShowToast(message, Toast.LENGTH_SHORT);
     }
 
     @UsedByGodot
-    private void ShowToastDebug(String message)
-    {
-        if(org.godotengine.godot.BuildConfig.DEBUG)
-        {
+    private void ShowToastDebug(String message) {
+        if (org.godotengine.godot.BuildConfig.DEBUG) {
             ShowToast(message);
         }
     }
-
 }

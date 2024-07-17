@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.levelplaygd3'
+    namespace 'com.atagames.levelplaygd3'
     compileSdk 34
 
     defaultConfig {
@@ -46,10 +46,33 @@ dependencies {
     implementation ("com.google.android.gms:play-services-ads:23.1.0")
     implementation ("com.ironsource.adapters:admobadapter:4.3.43")
 
-
     //implementation libs.androidx.appcompat
     //implementation libs.material
     //testImplementation libs.junit
     //androidTestImplementation libs.androidx.junit
     //androidTestImplementation libs.androidx.espresso.core
 }
+
+// Define the custom task in the build.gradle (Module level)
+task buildAndCopyAar(type: Copy) {
+    // Ensure the task depends on the assembleRelease task
+    dependsOn 'assembleRelease'
+
+    // Define the source location of the release AAR file
+    def aarFile = file("$buildDir/outputs/aar/${project.name}-release.aar")
+
+    // Define the destination directory
+    def destDir = file("C:\\Users\\oscar\\Documents\\GitHub\\FlappyPlane_Godot3_mono\\android\\plugins")
+
+    // Specify the source and destination for the copy task
+    from(aarFile)
+    into(destDir)
+
+    // Print the location of the copied AAR file
+    doLast {
+        println "Copied AAR to ${destDir.absolutePath}"
+    }
+}
+
+// Ensure the custom task runs after the AAR is built
+build.finalizedBy(buildAndCopyAar)

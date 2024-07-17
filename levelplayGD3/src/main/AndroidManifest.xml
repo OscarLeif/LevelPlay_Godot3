@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <meta-data
-            android:name="org.godotengine.plugin.v1.HelloWorld"
-            android:value="com.example.levelplaygd3.HelloWorld"/>
+            android:name="org.godotengine.plugin.v1.Levelplay"
+            android:value="com.atagames.levelplaygd3.Levelplay"/>
         <activity
             android:name="com.ironsource.sdk.controller.ControllerActivity"
             android:configChanges="orientation|screenSize"
