@@ -103,6 +103,7 @@ public class Levelplay extends GodotPlugin {
         return IsCOPPAUser;
     }
 
+    @UsedByGodot
     public void SubmitConsent(int userAge) {
         //COPPA
         if (CountryUtils.isCoppaCountry(this.userCountry) && userAge < 13) {
